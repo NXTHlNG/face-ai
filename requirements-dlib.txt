@@ -1,0 +1,2 @@
+# Для FACE_AI_LANDMARK_BACKEND=dlib81 (Windows: нужен MSVC или conda-forge dlib)
+dlib>=19.24.0
