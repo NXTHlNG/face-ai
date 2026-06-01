@@ -4,4 +4,6 @@ __pycache__/
 *.pyc
 models/*.onnx
 models/*.task
+models/segface/
+models/*.pth
 debug_output/

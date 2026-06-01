@@ -1,0 +1,39 @@
+{
+  "version": "1.0-demo",
+  "products": [
+    {"sku": "mac-ruby-woo", "brand": "MAC", "name": "Ruby Woo", "category": "lipstick", "lab": [43.4, 63.5, 37.2], "rgb": [200, 30, 45], "season_tags": ["true_winter", "bright_winter", "winter"]},
+    {"sku": "mac-velvet-teddy", "brand": "MAC", "name": "Velvet Teddy", "category": "lipstick", "lab": [58.2, 18.4, 22.1], "rgb": [180, 120, 100], "season_tags": ["soft_autumn", "true_autumn", "autumn"]},
+    {"sku": "mac-candy-yum", "brand": "MAC", "name": "Candy Yum-Yum", "category": "lipstick", "lab": [62.1, 58.2, -8.5], "rgb": [255, 120, 180], "season_tags": ["bright_spring", "true_spring", "spring"]},
+    {"sku": "nars-dolce-vita", "brand": "NARS", "name": "Dolce Vita", "category": "lipstick", "lab": [42.8, 38.5, 18.2], "rgb": [140, 60, 65], "season_tags": ["deep_autumn", "true_winter", "winter"]},
+    {"sku": "charlotte-pillow-talk", "brand": "Charlotte Tilbury", "name": "Pillow Talk", "category": "lipstick", "lab": [62.5, 22.8, 12.4], "rgb": [200, 140, 130], "season_tags": ["light_summer", "soft_summer", "summer"]},
+    {"sku": "dior-999", "brand": "Dior", "name": "Rouge 999", "category": "lipstick", "lab": [41.2, 55.1, 35.8], "rgb": [190, 25, 40], "season_tags": ["true_winter", "bright_winter", "winter"]},
+    {"sku": "bobbi-brown-pink-nude", "brand": "Bobbi Brown", "name": "Pink Nude", "category": "lipstick", "lab": [65.8, 18.2, 8.5], "rgb": [210, 150, 140], "season_tags": ["light_spring", "true_spring", "spring"]},
+    {"sku": "fenty-uncensored", "brand": "Fenty", "name": "Uncensored", "category": "lipstick", "lab": [39.5, 52.8, 32.1], "rgb": [175, 20, 35], "season_tags": ["bright_winter", "true_winter", "winter"]},
+    {"sku": "ysl-rouge-pur", "brand": "YSL", "name": "Le Rouge Pur Couture", "category": "lipstick", "lab": [44.1, 48.2, 28.5], "rgb": [185, 35, 50], "season_tags": ["deep_winter", "true_winter", "winter"]},
+    {"sku": "maybelline-lover", "brand": "Maybelline", "name": "Lover", "category": "lipstick", "lab": [55.2, 35.8, 15.2], "rgb": [170, 80, 85], "season_tags": ["soft_autumn", "true_autumn", "autumn"]},
+
+    {"sku": "nars-orgasm", "brand": "NARS", "name": "Orgasm", "category": "blush", "lab": [68.5, 28.2, 18.5], "rgb": [230, 150, 130], "season_tags": ["light_spring", "true_spring", "spring"]},
+    {"sku": "nars-deep-throat", "brand": "NARS", "name": "Deep Throat", "category": "blush", "lab": [72.1, 15.8, 12.2], "rgb": [235, 175, 165], "season_tags": ["light_summer", "soft_summer", "summer"]},
+    {"sku": "mac-peaches", "brand": "MAC", "name": "Peaches", "category": "blush", "lab": [70.2, 12.5, 28.5], "rgb": [240, 180, 140], "season_tags": ["true_spring", "light_spring", "spring"]},
+    {"sku": "bobbi-brown-pale-pink", "brand": "Bobbi Brown", "name": "Pale Pink", "category": "blush", "lab": [78.5, 8.2, 5.1], "rgb": [245, 210, 205], "season_tags": ["light_summer", "true_summer", "summer"]},
+    {"sku": "rare-beauty-joy", "brand": "Rare Beauty", "name": "Joy", "category": "blush", "lab": [58.2, 42.5, 22.8], "rgb": [200, 90, 80], "season_tags": ["true_autumn", "deep_autumn", "autumn"]},
+
+    {"sku": "mac-face-body-c2", "brand": "MAC", "name": "Face and Body C2", "category": "foundation", "lab": [72.5, 8.2, 18.5], "rgb": [230, 190, 165], "season_tags": ["light_spring", "true_spring", "spring"]},
+    {"sku": "fenty-240", "brand": "Fenty", "name": "Pro Filt'r 240", "category": "foundation", "lab": [58.2, 12.5, 22.8], "rgb": [190, 140, 110], "season_tags": ["true_autumn", "soft_autumn", "autumn"]},
+    {"sku": "nars-oslo", "brand": "NARS", "name": "Light Reflecting Oslo", "category": "foundation", "lab": [82.5, 2.1, 8.5], "rgb": [245, 225, 215], "season_tags": ["light_summer", "true_summer", "summer"]},
+    {"sku": "estee-double-wear-2n1", "brand": "Estée Lauder", "name": "Double Wear 2N1", "category": "foundation", "lab": [65.8, 5.2, 15.2], "rgb": [215, 175, 150], "season_tags": ["soft_summer", "light_summer", "summer"]},
+    {"sku": "mac-nc15", "brand": "MAC", "name": "Studio Fix NC15", "category": "foundation", "lab": [78.2, 4.5, 22.5], "rgb": [240, 210, 180], "season_tags": ["light_spring", "bright_spring", "spring"]},
+
+    {"sku": "ray-ban-aviator-gold", "brand": "Ray-Ban", "name": "Aviator Classic Gold", "category": "frames", "lab": [55.0, 2.0, 45.0], "rgb": [180, 140, 60], "season_tags": ["true_spring", "light_spring", "spring"], "overlay_asset": "overlays/frames/aviator-gold.png"},
+    {"sku": "ray-ban-wayfarer-black", "brand": "Ray-Ban", "name": "Wayfarer Black", "category": "frames", "lab": [15.0, 0.0, 0.0], "rgb": [20, 20, 20], "season_tags": ["true_winter", "bright_winter", "winter"], "overlay_asset": "overlays/frames/wayfarer-black.png"},
+    {"sku": "gucci-cat-eye-tortoise", "brand": "Gucci", "name": "Cat-Eye Tortoise", "category": "frames", "lab": [38.0, 18.0, 28.0], "rgb": [120, 70, 45], "season_tags": ["true_autumn", "deep_autumn", "autumn"], "overlay_asset": "overlays/frames/cat-eye-tortoise.png"},
+    {"sku": "persol-round-crystal", "brand": "Persol", "name": "Round Crystal", "category": "frames", "lab": [75.0, -2.0, 5.0], "rgb": [200, 200, 195], "season_tags": ["light_summer", "true_summer", "summer"], "overlay_asset": "overlays/frames/round-crystal.png"},
+    {"sku": "tom-ford-square-havana", "brand": "Tom Ford", "name": "Square Havana", "category": "frames", "lab": [32.0, 15.0, 22.0], "rgb": [90, 55, 40], "season_tags": ["soft_autumn", "true_autumn", "autumn"], "overlay_asset": "overlays/frames/square-havana.png"},
+
+    {"sku": "style-bob-ash-blonde", "brand": "Demo", "name": "Bob Ash Blonde", "category": "hairstyle", "lab": [72.0, -2.0, 18.0], "rgb": [210, 195, 170], "season_tags": ["light_summer", "true_summer", "summer"], "overlay_asset": "overlays/hairstyles/bob-ash-blonde.png"},
+    {"sku": "style-lob-chestnut", "brand": "Demo", "name": "Lob Chestnut", "category": "hairstyle", "lab": [42.0, 18.0, 28.0], "rgb": [100, 60, 40], "season_tags": ["true_autumn", "deep_autumn", "autumn"], "overlay_asset": "overlays/hairstyles/lob-chestnut.png"},
+    {"sku": "style-waves-espresso", "brand": "Demo", "name": "Soft Waves Espresso", "category": "hairstyle", "lab": [22.0, 8.0, 12.0], "rgb": [45, 30, 25], "season_tags": ["deep_winter", "true_winter", "winter"], "overlay_asset": "overlays/hairstyles/waves-espresso.png"},
+    {"sku": "style-pixie-copper", "brand": "Demo", "name": "Pixie Copper", "category": "hairstyle", "lab": [48.0, 35.0, 42.0], "rgb": [160, 80, 45], "season_tags": ["true_spring", "bright_spring", "spring"], "overlay_asset": "overlays/hairstyles/pixie-copper.png"},
+    {"sku": "style-long-platinum", "brand": "Demo", "name": "Long Platinum", "category": "hairstyle", "lab": [85.0, -1.0, 2.0], "rgb": [235, 232, 228], "season_tags": ["bright_winter", "true_winter", "winter"], "overlay_asset": "overlays/hairstyles/long-platinum.png"}
+  ]
+}

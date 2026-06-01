@@ -1,0 +1,116 @@
+[
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\10528.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "spring",
+    "pred_twelve": "true_spring",
+    "top_four": [
+      "spring",
+      "autumn"
+    ],
+    "top_twelve": [
+      "true_spring"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\10962.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "spring",
+    "pred_twelve": "true_spring",
+    "top_four": [
+      "spring",
+      "autumn"
+    ],
+    "top_twelve": [
+      "true_spring",
+      "true_autumn"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\11102.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "autumn",
+    "pred_twelve": "true_autumn",
+    "top_four": [
+      "autumn"
+    ],
+    "top_twelve": [
+      "true_autumn"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\11564.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "spring",
+    "pred_twelve": "true_spring",
+    "top_four": [
+      "spring",
+      "autumn"
+    ],
+    "top_twelve": [
+      "true_spring"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\11719.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "spring",
+    "pred_twelve": "true_spring",
+    "top_four": [
+      "spring"
+    ],
+    "top_twelve": [
+      "true_spring"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\1346.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "summer",
+    "pred_twelve": "true_summer",
+    "top_four": [
+      "summer",
+      "winter"
+    ],
+    "top_twelve": [
+      "true_summer",
+      "true_winter"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\13499.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "autumn",
+    "pred_twelve": "soft_autumn",
+    "top_four": [
+      "autumn",
+      "spring"
+    ],
+    "top_twelve": [
+      "soft_autumn",
+      "true_spring"
+    ]
+  },
+  {
+    "path": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB\\test\\autunno\\deep\\1402.jpg",
+    "truth_four": "autumn",
+    "truth_twelve": "deep_autumn",
+    "pred_four": "spring",
+    "pred_twelve": "bright_spring",
+    "top_four": [
+      "spring",
+      "autumn"
+    ],
+    "top_twelve": [
+      "bright_spring",
+      "true_spring"
+    ]
+  }
+]

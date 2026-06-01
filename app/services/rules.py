@@ -1,8 +1,19 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from app.config import settings
+
+_PALETTES_16: dict[str, str] | None = None
+
+
+def _palettes_16() -> dict[str, str]:
+    global _PALETTES_16
+    if _PALETTES_16 is None:
+        path = settings.data_dir / "palettes_16.json"
+        _PALETTES_16 = json.loads(path.read_text(encoding="utf-8"))
+    return _PALETTES_16
 
 
 def build_recommendations(
@@ -10,6 +21,7 @@ def build_recommendations(
     contrast: dict[str, Any],
     color: dict[str, Any],
     glasses_ratio: float | None,
+    seasonal_sixteen: str | None = None,
 ) -> list[dict[str, Any]]:
     rv = settings.rules_version
     fs = geometry.get("face_shape", "unknown")
@@ -22,7 +34,7 @@ def build_recommendations(
     recs.extend(_glasses_rules(fs, glasses_ratio, rv))
     recs.extend(_hair_rules(fs, rv))
     recs.extend(_makeup_rules(cb, fs, rv))
-    recs.extend(_color_clothing_rules(season, season_12, undertone, cb, rv))
+    recs.extend(_color_clothing_rules(season, season_12, undertone, cb, rv, seasonal_sixteen))
     recs.extend(_jewelry_only(undertone, rv))
     recs.append(
         {
@@ -139,8 +151,8 @@ def _makeup_rules(contrast_bucket: str, face_shape: str, rv: str) -> list[dict[s
                 "category": "makeup",
                 "title": "Контраст образа",
                 "detail": (
-                    "Высокий контраст лица часто хорошо сочетается с чёткими акцентами "
-                    "(стрелка, насыщенная губа), но не перегружайте всё сразу."
+                    "Высокий контраст лица — можно усилить губы и линию глаз (α≈0.7–0.85 по шкале "
+                    "интенсивности). Стрелка и насыщенная губа уместны, но не всё сразу."
                 ),
                 "rule_id": "makeup_contrast_high",
                 "rule_version": rv,
@@ -153,8 +165,8 @@ def _makeup_rules(contrast_bucket: str, face_shape: str, rv: str) -> list[dict[s
                 "category": "makeup",
                 "title": "Контраст образа",
                 "detail": (
-                    "Низкий контраст — мягкие переходы, глянцевые текстуры, наращивание "
-                    "контраста через одежду и аксессуары."
+                    "Низкий контраст — мягкий румянец и диффузные тени (α≈0.35–0.5), "
+                    "глянцевые текстуры; контраст наращивайте через одежду."
                 ),
                 "rule_id": "makeup_contrast_low",
                 "rule_version": rv,
@@ -184,6 +196,7 @@ def _color_clothing_rules(
     undertone: str,
     contrast_bucket: str,
     rv: str,
+    seasonal_sixteen: str | None = None,
 ) -> list[dict[str, Any]]:
     palettes_12 = {
         "light_spring": "Светлая тёплая весна: персик, светлый коралл, нежный аквамарин, "
@@ -209,15 +222,18 @@ def _color_clothing_rules(
         "winter": "Чистые холодные акценты: белоснежный, чёрный, холодный красный, яркий фуксия.",
         "unknown": "Ориентируйтесь на тест ткани при дневном свете — автооценка сезона приблизительная.",
     }
-    detail = palettes_12.get(season_12) or palettes_4.get(season, palettes_4["unknown"])
+    p16 = _palettes_16()
+    detail_16 = p16.get(seasonal_sixteen or "") if seasonal_sixteen else None
+    detail = detail_16 or palettes_12.get(season_12) or palettes_4.get(season, palettes_4["unknown"])
     out = [
         {
             "category": "clothing_colors",
             "title": "Ориентир по палитре (не диагноз)",
             "detail": detail,
-            "rule_id": f"palette_season_{season_12 if season_12 != 'unknown' else season}",
+            "rule_id": f"palette_season_{seasonal_sixteen or (season_12 if season_12 != 'unknown' else season)}",
             "rule_version": rv,
             "based_on": {
+                "seasonal_sixteen": seasonal_sixteen,
                 "seasonal_twelve": season_12,
                 "seasonal_guess": season,
                 "undertone_hint": undertone,

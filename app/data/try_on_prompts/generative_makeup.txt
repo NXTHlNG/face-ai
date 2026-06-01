@@ -1,0 +1,6 @@
+Season: {season_twelve} ({season_guess}).
+Makeup try-on inpaint for lips, blush, eyeshadow, brows.
+Target palette from makeup_db zones for this season.
+Preserve skin texture, lighting, and identity.
+Avoid heavy filter look; natural finish.
+Negative: plastic skin, wrong undertone, blurred eyes, changed face shape.

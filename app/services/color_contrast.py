@@ -3,34 +3,21 @@ from __future__ import annotations
 import cv2
 import numpy as np
 
-from app.services.face_parsing import ParsingResult
+from app.backends.color.aua_heuristics import (
+    aggregate_chroma,
+    brow_lab_from_mask,
+    chroma_from_ab,
+    hair_lab_luminance_trim,
+    lip_lab_brightness_clusters,
+    skin_lab_hue_trim,
+)
+from app.backends.color.undertone import infer_face_undertone, iris_undertone_untrusted
+from app.backends.parsing.types import ParsingResult
+from app.config import settings
+from app.services.mask_geometry import lip_mask_from_landmarks
 
 _MP_LEFT_IRIS = (474, 475, 476, 477)
 _MP_RIGHT_IRIS = (469, 470, 471, 472)
-_MP_OUTER_LIP_RING = (
-    61,
-    146,
-    91,
-    181,
-    84,
-    17,
-    314,
-    405,
-    321,
-    375,
-    291,
-    78,
-    95,
-    88,
-    178,
-    87,
-    14,
-    317,
-    402,
-    318,
-    324,
-    308,
-)
 
 
 def _mean_lab(image_rgb: np.ndarray, mask: np.ndarray) -> tuple[float, float, float] | None:
@@ -161,7 +148,10 @@ def _subtract_iris_pupil_blob(gray: np.ndarray, ring: np.ndarray) -> np.ndarray:
     return out
 
 
-def _median_lab_iris_ring(image_rgb: np.ndarray, base_mask: np.ndarray) -> tuple[float, float, float] | None:
+def _median_lab_iris_ring(
+    image_rgb: np.ndarray,
+    base_mask: np.ndarray,
+) -> tuple[float, float, float] | None:
     gray = cv2.cvtColor(image_rgb, cv2.COLOR_RGB2GRAY)
     ring = _iris_luminance_ring_mask(gray, base_mask)
     if ring is None:
@@ -171,7 +161,10 @@ def _median_lab_iris_ring(image_rgb: np.ndarray, base_mask: np.ndarray) -> tuple
     return _median_lab(image_rgb, ring)
 
 
-def _iris_lab_mediapipe(image_rgb: np.ndarray, lm: np.ndarray) -> tuple[float, float, float] | None:
+def _iris_lab_mediapipe(
+    image_rgb: np.ndarray,
+    lm: np.ndarray,
+) -> tuple[float, float, float] | None:
     if lm.shape[0] < 478:
         return None
     h, w = image_rgb.shape[:2]
@@ -191,7 +184,10 @@ def _iris_lab_mediapipe(image_rgb: np.ndarray, lm: np.ndarray) -> tuple[float, f
     return tuple(float(np.mean([x[i] for x in labs])) for i in range(3))
 
 
-def _iris_lab_ibug68(image_rgb: np.ndarray, lm: np.ndarray) -> tuple[float, float, float] | None:
+def _iris_lab_ibug68(
+    image_rgb: np.ndarray,
+    lm: np.ndarray,
+) -> tuple[float, float, float] | None:
     if lm.shape[0] < 68:
         return None
     h, w = image_rgb.shape[:2]
@@ -290,31 +286,7 @@ def build_iris_ring_union_debug_mask(
 
 
 def _lip_mask_from_landmarks(image_rgb: np.ndarray, lm: np.ndarray) -> np.ndarray | None:
-    h, w = image_rgb.shape[:2]
-    mask = np.zeros((h, w), dtype=np.uint8)
-    if lm.shape[0] >= 478:
-        pts = []
-        for i in _MP_OUTER_LIP_RING:
-            if i < len(lm):
-                pts.append([float(lm[i, 0]), float(lm[i, 1])])
-        if len(pts) >= 3:
-            arr = np.asarray(pts, dtype=np.float32)
-            hull = cv2.convexHull(arr)
-            poly = np.round(hull).astype(np.int32).reshape(-1, 2)
-            poly[:, 0] = np.clip(poly[:, 0], 0, w - 1)
-            poly[:, 1] = np.clip(poly[:, 1], 0, h - 1)
-            cv2.fillConvexPoly(mask, poly, 255)
-            return mask
-    if lm.shape[0] >= 68:
-        pts = [[float(lm[i, 0]), float(lm[i, 1])] for i in range(48, 60)]
-        arr = np.asarray(pts, dtype=np.float32)
-        hull = cv2.convexHull(arr)
-        poly = np.round(hull).astype(np.int32).reshape(-1, 2)
-        poly[:, 0] = np.clip(poly[:, 0], 0, w - 1)
-        poly[:, 1] = np.clip(poly[:, 1], 0, h - 1)
-        cv2.fillConvexPoly(mask, poly, 255)
-        return mask
-    return None
+    return lip_mask_from_landmarks(image_rgb.shape, lm)
 
 
 def _resolve_iris_lab(
@@ -342,22 +314,31 @@ def _resolve_iris_lab(
     return None
 
 
+def _lip_mask_for_color(
+    image_rgb: np.ndarray,
+    pr: ParsingResult,
+    landmarks_px: np.ndarray | None,
+) -> np.ndarray | None:
+    if pr.lip_mask is not None and np.any(pr.lip_mask > 127):
+        return pr.lip_mask
+    if landmarks_px is not None:
+        return _lip_mask_from_landmarks(image_rgb, landmarks_px)
+    return None
+
+
 def _resolve_lip_lab(
     image_rgb: np.ndarray,
     pr: ParsingResult,
     landmarks_px: np.ndarray | None,
 ) -> tuple[float, float, float] | None:
-    if pr.lip_mask is not None and np.any(pr.lip_mask > 127):
-        got = _median_lab(image_rgb, pr.lip_mask)
+    lip_mask = _lip_mask_for_color(image_rgb, pr, landmarks_px)
+    if lip_mask is None:
+        return None
+    if settings.lip_color_backend == "brightness_clusters":
+        got = lip_lab_brightness_clusters(image_rgb, lip_mask)
         if got:
             return got
-    if landmarks_px is not None:
-        lm = _lip_mask_from_landmarks(image_rgb, landmarks_px)
-        if lm is not None and np.any(lm > 127):
-            got = _median_lab(image_rgb, lm)
-            if got:
-                return got
-    return None
+    return _median_lab(image_rgb, lip_mask)
 
 
 def _bucket_from_blend(peak: float, blend_support: float) -> str:
@@ -501,9 +482,15 @@ def compute_contrast_and_color(
     landmarks_px: np.ndarray | None = None,
     glasses_pixel_ratio: float | None = None,
 ) -> tuple[dict, dict]:
-    skin = _mean_lab(image_rgb, pr.skin_mask)
-    brow = _mean_lab(image_rgb, pr.brow_mask)
-    hair = _mean_lab(image_rgb, pr.hair_mask)
+    skin = skin_lab_hue_trim(image_rgb, pr.skin_mask)
+    if skin is None:
+        skin = _mean_lab(image_rgb, pr.skin_mask)
+    brow = brow_lab_from_mask(image_rgb, pr.brow_mask, pr.hair_mask)
+    if brow is None:
+        brow = _mean_lab(image_rgb, pr.brow_mask)
+    hair = hair_lab_luminance_trim(image_rgb, pr.hair_mask, pr.skin_mask)
+    if hair is None:
+        hair = _mean_lab(image_rgb, pr.hair_mask)
 
     skin_L = skin[0] if skin else 70.0
     brow_L = brow[0] if brow else skin_L
@@ -553,7 +540,6 @@ def compute_contrast_and_color(
         if skin
         else (0.0, 0.0)
     )
-    chroma = float(np.hypot(skin_ab[0], skin_ab[1]))
 
     hair_ab = None
     if hair:
@@ -567,7 +553,24 @@ def compute_contrast_and_color(
         if approx:
             iris_ab_color = approx
 
-    undertone = _fused_undertone(skin_ab, hair_ab, iris_ab_color)
+    lips_ab = None
+    if lip_lab:
+        lips_ab = (float(lip_lab[1]) - 128.0, float(lip_lab[2]) - 128.0)
+
+    iris_for_chroma = iris_ab_color
+    if iris_undertone_untrusted(hair_ab, iris_ab_color):
+        iris_for_chroma = None
+
+    chroma_skin = chroma_from_ab(skin_ab)
+    chroma = aggregate_chroma(skin_ab, iris_for_chroma, lips_ab)
+
+    low_contrast = bucket == "low" or vci < 36.0
+    undertone = infer_face_undertone(
+        skin_ab,
+        hair_ab,
+        iris_ab_color,
+        low_contrast=low_contrast,
+    )
 
     hair_Lm = float(hair[0]) if hair else skin_L - 15.0
     depth = "medium"
@@ -592,6 +595,10 @@ def compute_contrast_and_color(
     color_features = {
         "skin_ab_mean": (round(skin_ab[0], 3), round(skin_ab[1], 3)),
         "skin_chroma_hint": round(chroma, 3),
+        "skin_chroma_skin_only": round(chroma_skin, 3),
+        "lip_ab_mean": (
+            (round(lips_ab[0], 3), round(lips_ab[1], 3)) if lips_ab else None
+        ),
         "hair_L_mean": round(hair_Lm, 3) if hair else None,
         "hair_ab_mean": (
             (round(hair_ab[0], 3), round(hair_ab[1], 3)) if hair_ab else None
@@ -613,41 +620,6 @@ def compute_contrast_and_color(
     }
 
     return contrast, color_features
-
-
-def _fused_undertone(
-    skin_ab: tuple[float, float],
-    hair_ab: tuple[float, float] | None,
-    iris_ab: tuple[float, float] | None,
-) -> str:
-    a_star, b_star = skin_ab
-    warm_s = 0.0
-    cool_s = 0.0
-    if b_star > 4 and a_star > -2:
-        warm_s += 2.2
-    elif b_star < -4 or a_star < -6:
-        cool_s += 2.2
-    else:
-        warm_s += 1.05
-        cool_s += 1.05
-
-    for ab, wt in ((hair_ab, 1.65), (iris_ab, 1.15)):
-        if ab is None:
-            continue
-        _, hb = ab
-        if hb > 3.2:
-            warm_s += wt * min(max(hb, 0.0) / 13.5, 1.0)
-        elif hb < -3.2:
-            cool_s += wt * min(max(-hb, 0.0) / 13.5, 1.0)
-        else:
-            warm_s += wt * 0.38
-            cool_s += wt * 0.38
-
-    if warm_s > cool_s * 1.2:
-        return "warm"
-    if cool_s > warm_s * 1.2:
-        return "cool"
-    return "neutral"
 
 
 def _clarity_axis(
@@ -829,5 +801,4 @@ def _iris_approx_ab(image_rgb: np.ndarray, skin_mask: np.ndarray) -> tuple[float
         return None
     lab = cv2.cvtColor(sel.reshape(-1, 1, 3), cv2.COLOR_RGB2LAB).reshape(-1, 3)
     return (float(np.mean(lab[:, 1]) - 128), float(np.mean(lab[:, 2]) - 128))
-
 

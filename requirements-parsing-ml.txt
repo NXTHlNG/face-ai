@@ -1,0 +1,6 @@
+# Optional: FaRL-B and SegFace parsing backends
+torch>=2.1.0
+torchvision>=0.16.0
+pyfacer>=0.0.5
+huggingface_hub>=0.20.0
+einops>=0.3.2

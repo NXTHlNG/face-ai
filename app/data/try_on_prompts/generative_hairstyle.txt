@@ -1,0 +1,6 @@
+Season: {season_twelve} ({season_guess}).
+Hairstyle try-on inpaint within hair mask only.
+Style hint: {hairstyle_sku_name}.
+Recolor and reshape hair to match season palette; keep face and background unchanged.
+Natural hair texture, realistic roots and edges.
+Negative: halo around head, face distortion, background bleed, wig-like edges.

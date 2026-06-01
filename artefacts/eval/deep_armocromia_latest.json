@@ -1,0 +1,241 @@
+{
+  "generated_at": "2026-05-21T19:45:11.395893+00:00",
+  "dataset_root": "C:\\Users\\NXTHING\\Desktop\\face-ai\\dataset\\RGB\\RGB",
+  "split": "test",
+  "limit": 10,
+  "offset": 0,
+  "elapsed_sec": 24.27,
+  "settings": {
+    "parsing_backend": "segface",
+    "season_classifier": "ensemble",
+    "skin_color_backend": "mean_lab",
+    "lip_color_backend": "brightness_clusters",
+    "landmark_backend": "mediapipe"
+  },
+  "counts": {
+    "total": 10,
+    "analyzed": 10
+  },
+  "four_season": {
+    "accuracy_top1": 0.4,
+    "accuracy_top2": 0.8,
+    "per_class": {
+      "autumn": {
+        "support": 10,
+        "accuracy": 0.4
+      }
+    },
+    "confusion": {
+      "autumn": {
+        "autumn": 4,
+        "spring": 5,
+        "summer": 1,
+        "winter": 0
+      },
+      "spring": {
+        "autumn": 0,
+        "spring": 0,
+        "summer": 0,
+        "winter": 0
+      },
+      "summer": {
+        "autumn": 0,
+        "spring": 0,
+        "summer": 0,
+        "winter": 0
+      },
+      "winter": {
+        "autumn": 0,
+        "spring": 0,
+        "summer": 0,
+        "winter": 0
+      }
+    }
+  },
+  "twelve_season": {
+    "accuracy_top1": 0.2,
+    "accuracy_top2": 0.2,
+    "accuracy_top3": 0.2,
+    "per_class": {
+      "deep_autumn": {
+        "support": 10,
+        "accuracy": 0.2
+      }
+    },
+    "confusion": {
+      "bright_spring": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "bright_winter": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "deep_autumn": {
+        "bright_spring": 1,
+        "bright_winter": 0,
+        "deep_autumn": 2,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 1,
+        "soft_summer": 0,
+        "true_autumn": 1,
+        "true_spring": 4,
+        "true_summer": 1,
+        "true_winter": 0
+      },
+      "deep_winter": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "light_spring": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "light_summer": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "soft_autumn": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "soft_summer": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "true_autumn": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "true_spring": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "true_summer": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      },
+      "true_winter": {
+        "bright_spring": 0,
+        "bright_winter": 0,
+        "deep_autumn": 0,
+        "deep_winter": 0,
+        "light_spring": 0,
+        "light_summer": 0,
+        "soft_autumn": 0,
+        "soft_summer": 0,
+        "true_autumn": 0,
+        "true_spring": 0,
+        "true_summer": 0,
+        "true_winter": 0
+      }
+    }
+  },
+  "pipeline": {
+    "parsing_used_rate": 1.0,
+    "mean_confidence_four": 0.7381,
+    "mean_confidence_twelve": 0.7012
+  }
+}

@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Face AI — анализ & try-on</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+      background: #0f1117;
+      color: #e8eaed;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.4rem; margin: 0 0 0.25rem; }
+    h2 { font-size: 1rem; margin: 0 0 0.75rem; color: #bdc1c6; font-weight: 600; }
+    h3 { font-size: 0.88rem; margin: 0 0 0.5rem; color: #9aa0a6; font-weight: 600; }
+    p.sub { color: #9aa0a6; margin: 0 0 1rem; font-size: 0.95rem; }
+    code { font-size: 0.88em; }
+    label {
+      display: block;
+      margin-bottom: 0.35rem;
+      font-size: 0.9rem;
+      color: #bdc1c6;
+    }
+    input[type="file"], textarea, select {
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.6rem;
+      border: 1px solid #3c4043;
+      border-radius: 8px;
+      background: #1a1d24;
+      color: #e8eaed;
+    }
+    textarea { min-height: 80px; font-family: ui-monospace, monospace; font-size: 0.85rem; resize: vertical; }
+    button, .btn {
+      background: #8ab4f8;
+      color: #0f1117;
+      border: none;
+      padding: 0.65rem 1.4rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button.secondary, .btn.secondary {
+      background: #3c4043;
+      color: #e8eaed;
+    }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status { margin-top: 1rem; font-size: 0.9rem; color: #9aa0a6; }
+    .error { color: #f28b82; }
+    .ok { color: #81c995; }
+    .warn { color: #fdd663; }
+
+    .health-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .pill {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      border: 1px solid #3c4043;
+      background: #1a1d24;
+      color: #9aa0a6;
+    }
+    .pill.on { border-color: #81c995; color: #81c995; }
+    .pill.off { border-color: #5f6368; color: #6e7378; }
+
+    .steps {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+    .step {
+      font-size: 0.78rem;
+      padding: 0.35rem 0.65rem;
+      border-radius: 6px;
+      background: #1a1d24;
+      border: 1px solid #3c4043;
+      color: #6e7378;
+    }
+    .step.active { border-color: #8ab4f8; color: #8ab4f8; }
+    .step.done { border-color: #81c995; color: #81c995; }
+
+    #results { margin-top: 1.5rem; }
+    .card {
+      background: #1a1d24;
+      border: 1px solid #3c4043;
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.75rem;
+    }
+    .stat {
+      background: #0f1117;
+      border-radius: 8px;
+      padding: 0.65rem 0.75rem;
+    }
+    .stat .label { font-size: 0.75rem; color: #9aa0a6; margin-bottom: 0.15rem; }
+    .stat .value { font-size: 1rem; font-weight: 600; }
+    .stat .meta { font-size: 0.8rem; color: #9aa0a6; margin-top: 0.1rem; }
+
+    .swatch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 0.75rem;
+    }
+    .swatch {
+      background: #0f1117;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #3c4043;
+    }
+    .swatch-color {
+      height: 72px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .swatch-info { padding: 0.55rem 0.6rem 0.65rem; }
+    .swatch-region { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .swatch-hex {
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+      color: #9aa0a6;
+    }
+    .swatch-lab { font-size: 0.72rem; color: #6e7378; margin-top: 0.15rem; }
+
+    .palette-row { margin-bottom: 1.25rem; }
+    .palette-row:last-child { margin-bottom: 0; }
+
+    .media-grid, .debug-grid, .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+    .media-grid img, .debug-grid img {
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #3c4043;
+      display: block;
+      background: #0f1117;
+    }
+    .media-caption, .debug-caption {
+      font-size: 0.8rem;
+      color: #9aa0a6;
+      margin-top: 0.35rem;
+      word-break: break-all;
+    }
+    .debug-item {
+      background: #0f1117;
+      border: 1px solid #3c4043;
+      border-radius: 8px;
+      padding: 0.55rem;
+    }
+    .debug-text-wrap {
+      margin-top: 0.45rem;
+      max-height: 180px;
+      overflow: auto;
+      background: #1a1d24;
+      border-radius: 6px;
+      padding: 0.55rem 0.65rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #bdc1c6;
+    }
+    .run-id {
+      font-family: ui-monospace, monospace;
+      font-size: 0.8rem;
+      color: #8ab4f8;
+      margin: 0 0 0.75rem;
+    }
+
+    .rec-list { list-style: none; padding: 0; margin: 0; }
+    .rec-list li {
+      padding: 0.65rem 0;
+      border-bottom: 1px solid #2a2d34;
+    }
+    .rec-list li:last-child { border-bottom: none; }
+    .rec-title { font-weight: 600; font-size: 0.92rem; }
+    .rec-detail { font-size: 0.85rem; color: #bdc1c6; margin-top: 0.15rem; }
+
+    .product-card {
+      background: #0f1117;
+      border: 1px solid #3c4043;
+      border-radius: 10px;
+      padding: 0.75rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .product-swatch {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+    .product-name { font-weight: 600; font-size: 0.9rem; }
+    .product-brand { font-size: 0.78rem; color: #9aa0a6; }
+    .product-match {
+      font-size: 0.82rem;
+      color: #81c995;
+      margin-top: 0.15rem;
+    }
+    .product-sku {
+      font-family: ui-monospace, monospace;
+      font-size: 0.72rem;
+      color: #6e7378;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin: 0.75rem 0;
+    }
+    .chip {
+      font-size: 0.78rem;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid #3c4043;
+      background: #0f1117;
+      color: #bdc1c6;
+      cursor: pointer;
+      user-select: none;
+    }
+    .chip.selected { border-color: #8ab4f8; background: rgba(138,180,248,0.12); color: #8ab4f8; }
+
+    .toggle-row {
+      display: flex;
+      gap: 0.5rem;
+      margin: 0.75rem 0;
+    }
+    .toggle-btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem;
+      border-radius: 8px;
+      border: 1px solid #3c4043;
+      background: #0f1117;
+      color: #9aa0a6;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+    .toggle-btn.active { border-color: #8ab4f8; color: #8ab4f8; }
+
+    .slider-wrap { margin: 1rem 0; }
+    .slider-wrap input[type=range] { width: 100%; margin: 0.5rem 0; }
+    .compare-box {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #3c4043;
+      aspect-ratio: 3/4;
+      background: #0f1117;
+    }
+    .compare-box img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .compare-after {
+      clip-path: inset(0 0 0 50%);
+    }
+
+    .score-ring {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      border: 4px solid #8ab4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #8ab4f8;
+      flex-shrink: 0;
+    }
+    .inline-hint {
+      background: rgba(138,180,248,0.08);
+      border: 1px solid rgba(138,180,248,0.25);
+      border-radius: 8px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.88rem;
+      color: #bdc1c6;
+      margin-top: 0.75rem;
+    }
+
+    .action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    details.raw-json { margin-top: 0.5rem; }
+    details.raw-json summary {
+      cursor: pointer;
+      color: #9aa0a6;
+      font-size: 0.9rem;
+      user-select: none;
+    }
+    pre {
+      margin-top: 0.75rem;
+      padding: 1rem;
+      background: #0f1117;
+      border: 1px solid #3c4043;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 0.78rem;
+      max-height: 50vh;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .empty-note { color: #6e7378; font-size: 0.9rem; }
+    .section-note { font-size: 0.82rem; color: #6e7378; margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+  <h1>Face AI</h1>
+  <p class="sub">Debug UI: анализ → продукты → photo try-on → outfit scanner</p>
+
+  <div class="health-bar" id="healthBar">загрузка /health…</div>
+
+  <div class="steps">
+    <span class="step active" id="step1">1. Анализ</span>
+    <span class="step" id="step2">2. Продукты</span>
+    <span class="step" id="step3">3. Try-on</span>
+    <span class="step" id="step4">4. Образ</span>
+  </div>
+
+  <form id="form">
+    <label for="file">Фото лица *</label>
+    <input type="file" id="file" name="file" accept="image/*" required>
+
+    <label for="wrist">Фото запястья (опционально)</label>
+    <input type="file" id="wrist" name="wrist_file" accept="image/*">
+
+    <label for="meta">meta_json (опционально)</label>
+    <textarea id="meta" name="meta_json" placeholder='{"daylight_hint": true, "no_makeup_hint": true}'></textarea>
+
+    <button type="submit" id="submit">Анализировать</button>
+  </form>
+
+  <div id="status"></div>
+  <div id="results" hidden></div>
+
+  <script>
+    const REGION_RU = {
+      skin: "Кожа", hair: "Волосы", brow: "Брови", iris: "Глаза", lip: "Губы",
+    };
+    const SEASON_RU = {
+      spring: "Весна", summer: "Лето", autumn: "Осень", winter: "Зима", unknown: "—",
+    };
+    const TWELVE_RU = {
+      light_spring: "Светлая весна", true_spring: "Истинная весна", bright_spring: "Яркая весна",
+      light_summer: "Светлое лето", true_summer: "Истинное лето", soft_summer: "Мягкое лето",
+      soft_autumn: "Мягкая осень", true_autumn: "Истинная осень", deep_autumn: "Глубокая осень",
+      deep_winter: "Глубокая зима", true_winter: "Истинная зима", bright_winter: "Яркая зима",
+      unknown: "—",
+    };
+    const CATEGORY_RU = {
+      lipstick: "Помада", blush: "Румяна", foundation: "Тон",
+      frames: "Оправы", hairstyle: "Причёски",
+    };
+    const UNDERTONE_RU = { warm: "Тёплый", cool: "Холодный", neutral: "Нейтральный" };
+    const PRODUCT_CATEGORIES = ["lipstick", "blush", "frames", "hairstyle"];
+
+    const form = document.getElementById("form");
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+    const submitBtn = document.getElementById("submit");
+    const healthBar = document.getElementById("healthBar");
+
+    let previewUrls = [];
+    let lastAnalysis = null;
+    let lastFaceFile = null;
+    let lastSeasonTwelve = "unknown";
+    let healthData = {};
+    let tryOnMode = "cv";
+    let tryOnCategories = new Set(["makeup", "glasses", "hairstyle"]);
+
+    function revokePreviewUrls() {
+      previewUrls.forEach((url) => URL.revokeObjectURL(url));
+      previewUrls = [];
+    }
+
+    function filePreviewUrl(input) {
+      if (!input?.files?.[0]) return null;
+      const url = URL.createObjectURL(input.files[0]);
+      previewUrls.push(url);
+      return url;
+    }
+
+    function pct(x) {
+      return x == null ? "—" : `${Math.round(x * 100)}%`;
+    }
+
+    function rgbCss(rgb) {
+      if (!rgb || rgb.length < 3) return "#666";
+      return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    }
+
+    function setStep(n) {
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`step${i}`);
+        el.classList.remove("active", "done");
+        if (i < n) el.classList.add("done");
+        else if (i === n) el.classList.add("active");
+      }
+    }
+
+    async function loadHealth() {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 5000);
+        const res = await fetch("/health", { signal: ctrl.signal });
+        clearTimeout(timer);
+        healthData = res.ok ? await res.json() : {};
+        const pills = [];
+        pills.push(`<span class="pill on">API ok</span>`);
+        pills.push(`<span class="pill ${healthData.llm_available ? "on" : "off"}">LLM ${healthData.llm_available ? "on" : "off"}</span>`);
+        pills.push(`<span class="pill ${healthData.generative_available ? "on" : "off"}">Generative ${healthData.generative_available ? "on" : "off"}</span>`);
+        const cat = healthData.products_catalog || {};
+        pills.push(`<span class="pill ${cat.loaded ? "on" : "off"}">Products ${cat.count || 0}</span>`);
+        healthBar.innerHTML = pills.join("");
+      } catch (err) {
+        const msg = err.name === "AbortError" ? "timeout 5s" : err.message;
+        healthBar.innerHTML = `<span class="pill off">/health: ${msg}</span>`;
+      }
+    }
+
+    function regionLabel(region) {
+      if (REGION_RU[region]) return REGION_RU[region];
+      const m = region.match(/^(spring|summer|autumn|winter)_ref_(\d+)$/);
+      if (m) return `${SEASON_RU[m[1]]} · ref ${m[2]}`;
+      return region;
+    }
+
+    function swatchCard(s) {
+      const hex = s.hex || "#000000";
+      const lab = s.lab_cielab
+        ? `L* ${s.lab_cielab[0].toFixed(1)} · a* ${s.lab_cielab[1].toFixed(1)} · b* ${s.lab_cielab[2].toFixed(1)}`
+        : (s.lab_opencv ? `L ${s.lab_opencv[0].toFixed(1)} · a ${s.lab_opencv[1].toFixed(1)} · b ${s.lab_opencv[2].toFixed(1)}` : "");
+      return `
+        <div class="swatch">
+          <div class="swatch-color" style="background:${hex}"></div>
+          <div class="swatch-info">
+            <div class="swatch-region">${regionLabel(s.region)}</div>
+            <div class="swatch-hex">${hex}</div>
+            ${lab ? `<div class="swatch-lab">${lab}</div>` : ""}
+          </div>
+        </div>`;
+    }
+
+    function renderSwatches(items) {
+      if (!items?.length) return `<p class="empty-note">Нет данных</p>`;
+      return `<div class="swatch-grid">${items.map(swatchCard).join("")}</div>`;
+    }
+
+    function renderInputSection(faceUrl, wristUrl) {
+      if (!faceUrl && !wristUrl) return "";
+      let html = `<div class="card"><h2>Входные фото</h2><div class="media-grid">`;
+      if (faceUrl) html += `<div><img src="${faceUrl}" alt="face"><div class="media-caption">Лицо</div></div>`;
+      if (wristUrl) html += `<div><img src="${wristUrl}" alt="wrist"><div class="media-caption">Запястье</div></div>`;
+      return html + `</div></div>`;
+    }
+
+    function debugUrl(runId, name) {
+      return `/debug/${encodeURIComponent(runId)}/${encodeURIComponent(name)}`;
+    }
+
+    function renderPaletteSection(palette) {
+      if (!palette?.face?.length && !palette?.season_reference?.length) return "";
+      return `
+        <div class="card">
+          <h2>Палитры</h2>
+          <div class="palette-row"><h3>Цвета лица</h3>${renderSwatches(palette.face)}</div>
+          <div class="palette-row"><h3>Референс сезона</h3>${renderSwatches(palette.season_reference)}</div>
+        </div>`;
+    }
+
+    function renderDebugSection(debug) {
+      if (!debug?.run_id || !debug.artifacts?.length) {
+        return `<div class="card"><h2>Debug-файлы</h2><p class="empty-note">Нет артефактов. <code>FACE_AI_DEBUG_SAVE_IMAGES=true</code></p></div>`;
+      }
+      const images = debug.artifacts.filter((a) => a.kind === "image");
+      const texts = debug.artifacts.filter((a) => a.kind !== "image");
+      let html = `<div class="card"><h2>Debug-файлы</h2><div class="run-id">${debug.run_id}</div>`;
+      if (images.length) {
+        html += `<h3>Изображения (${images.length})</h3><div class="debug-grid">`;
+        for (const item of images) {
+          html += `<div class="debug-item"><a href="${debugUrl(debug.run_id, item.name)}" target="_blank"><img src="${debugUrl(debug.run_id, item.name)}" alt="${item.name}" loading="lazy"></a><div class="debug-caption">${item.name}</div></div>`;
+        }
+        html += `</div>`;
+      }
+      if (texts.length) {
+        html += `<h3 style="margin-top:1rem;">JSON (${texts.length})</h3><div class="debug-grid">`;
+        for (const item of texts) {
+          html += `<div class="debug-item"><div class="debug-caption">${item.name}</div><div class="debug-text-wrap" data-debug-text="${item.name}">загрузка…</div></div>`;
+        }
+        html += `</div>`;
+      }
+      return html + `</div>`;
+    }
+
+    function renderOutfitHint(hint) {
+      if (!hint?.visible) return "";
+      const score = hint.compatibility_score != null ? `${Math.round(hint.compatibility_score)}%` : "—";
+      return `<div class="inline-hint">Образ на фото: совместимость ~ <strong>${score}</strong>${hint.message ? ` — ${hint.message}` : ""}</div>`;
+    }
+
+    function renderProductsSection(productsByCategory) {
+      if (!productsByCategory || !Object.keys(productsByCategory).length) {
+        return `<div class="card" id="productsSection"><h2>Продукты (ΔE match)</h2><p class="empty-note">Нет данных</p></div>`;
+      }
+      let html = `<div class="card" id="productsSection"><h2>Продукты для вашего сезона</h2><p class="section-note">GET /products/match · season: <code>${lastSeasonTwelve}</code></p>`;
+      for (const [cat, data] of Object.entries(productsByCategory)) {
+        html += `<h3>${CATEGORY_RU[cat] || cat}</h3><div class="product-grid">`;
+        for (const m of (data.matches || [])) {
+          html += `
+            <div class="product-card">
+              <div class="product-swatch" style="background:${rgbCss(m.rgb)}"></div>
+              <div>
+                <div class="product-name">${m.name}</div>
+                <div class="product-brand">${m.brand}</div>
+                <div class="product-match">${m.match_pct}% · ΔE ${m.delta_e}</div>
+                <div class="product-sku">${m.sku}</div>
+              </div>
+            </div>`;
+        }
+        html += `</div>`;
+      }
+      return html + `</div>`;
+    }
+
+    function renderTryOnSection(faceUrl) {
+      const genHidden = !healthData.generative_available;
+      return `
+        <div class="card" id="tryOnSection">
+          <h2>Photo try-on</h2>
+          <p class="section-note">POST /try-on/photo · makeup + glasses + hairstyle</p>
+          <div class="chip-row" id="categoryChips">
+            <span class="chip selected" data-cat="makeup">Макияж</span>
+            <span class="chip selected" data-cat="glasses">Очки</span>
+            <span class="chip selected" data-cat="hairstyle">Причёска</span>
+          </div>
+          <div class="toggle-row" id="tryOnToggle">
+            <div class="toggle-btn active" data-mode="cv">Classic (CV)</div>
+            <div class="toggle-btn ${genHidden ? "" : ""}" data-mode="generative" ${genHidden ? 'style="opacity:0.4;pointer-events:none"' : ""}>AI (Generative)</div>
+          </div>
+          <div class="action-row">
+            <button type="button" id="btnTryOn">Примерить на фото</button>
+          </div>
+          <div id="tryOnResult"></div>
+          <div class="compare-box" id="compareBox" hidden>
+            <img id="compareBefore" src="${faceUrl || ""}" alt="before">
+            <img id="compareAfter" class="compare-after" src="" alt="after">
+          </div>
+          <div class="slider-wrap" id="sliderWrap" hidden>
+            <label for="compareSlider">До / после</label>
+            <input type="range" id="compareSlider" min="0" max="100" value="50">
+          </div>
+        </div>`;
+    }
+
+    function renderOutfitSection() {
+      return `
+        <div class="card" id="outfitSection">
+          <h2>Outfit scanner</h2>
+          <p class="section-note">POST /outfit/scan · нужен цветотип из шага 1</p>
+          <label for="outfitFile">Фото образа (второй снимок)</label>
+          <input type="file" id="outfitFile" accept="image/*">
+          <div class="action-row">
+            <button type="button" class="secondary" id="btnOutfitScan">Проверить образ</button>
+          </div>
+          <div id="outfitResult"></div>
+        </div>`;
+    }
+
+    function renderResults(data, faceUrl, wristUrl, productsByCategory) {
+      const m = data.metrics || {};
+      const seasonal = m.seasonal || {};
+      const color = m.color_features || {};
+      const palette = m.analysis_palette || {};
+      const masks = m.mask_preview || {};
+      const conf = data.confidence || {};
+      const season4 = seasonal.seasonal_guess || color.seasonal_guess || "unknown";
+      const season12 = seasonal.seasonal_twelve || color.seasonal_twelve || "unknown";
+      const undertone = seasonal.undertone_hint || color.undertone_hint || "neutral";
+
+      let html = renderInputSection(faceUrl, wristUrl);
+      html += renderPaletteSection(palette);
+      html += renderDebugSection(data.debug);
+
+      if (m && Object.keys(m).length) {
+        html += `
+          <div class="card">
+            <h2>Результат анализа</h2>
+            ${renderOutfitHint(m.outfit_hint)}
+            <div class="summary-grid">
+              <div class="stat">
+                <div class="label">Сезон (4)</div>
+                <div class="value">${SEASON_RU[season4] || season4}</div>
+                <div class="meta">${pct(seasonal.seasonal_confidence ?? color.seasonal_confidence)}</div>
+              </div>
+              <div class="stat">
+                <div class="label">Подтип (12)</div>
+                <div class="value">${TWELVE_RU[season12] || season12}</div>
+                <div class="meta">${pct(seasonal.seasonal_twelve_confidence ?? color.seasonal_twelve_confidence)}</div>
+              </div>
+              <div class="stat">
+                <div class="label">Подтон</div>
+                <div class="value">${UNDERTONE_RU[undertone] || undertone}</div>
+                <div class="meta">${seasonal.undertone_source || "face"}</div>
+              </div>
+              <div class="stat">
+                <div class="label">Уверенность</div>
+                <div class="value">${pct(conf.overall)}</div>
+                <div class="meta">цвет ${pct(conf.color)} · контраст ${pct(conf.contrast)}</div>
+              </div>
+            </div>
+          </div>`;
+
+        if (masks.skin_mask_b64 || masks.combined_features_b64) {
+          html += `<div class="card"><h2>Маски parsing</h2><div class="media-grid">`;
+          if (masks.skin_mask_b64) {
+            html += `<div><img src="data:image/png;base64,${masks.skin_mask_b64}" alt="skin"><div class="media-caption">Кожа</div></div>`;
+          }
+          if (masks.combined_features_b64) {
+            html += `<div><img src="data:image/png;base64,${masks.combined_features_b64}" alt="features"><div class="media-caption">Зоны лица</div></div>`;
+          }
+          html += `</div></div>`;
+        }
+      }
+
+      if (data.recommendations?.length) {
+        html += `
+          <div class="card">
+            <h2>Рекомендации</h2>
+            <ul class="rec-list">
+              ${data.recommendations.map(r => `
+                <li><div class="rec-title">${r.title}</div><div class="rec-detail">${r.detail}</div></li>`).join("")}
+            </ul>
+          </div>`;
+      }
+
+      html += renderProductsSection(productsByCategory);
+      html += renderTryOnSection(faceUrl);
+      html += renderOutfitSection();
+      html += `<details class="raw-json"><summary>Полный JSON анализа</summary><pre>${JSON.stringify(data, null, 2)}</pre></details>`;
+      return html;
+    }
+
+    async function fetchProductMatches(seasonTwelve) {
+      const out = {};
+      await Promise.all(PRODUCT_CATEGORIES.map(async (cat) => {
+        try {
+          const q = new URLSearchParams({ season_twelve: seasonTwelve, category: cat, top_k: "3" });
+          const res = await fetch(`/products/match?${q}`);
+          if (res.ok) out[cat] = await res.json();
+        } catch { /* ignore */ }
+      }));
+      return out;
+    }
+
+    async function hydrateDebugTexts(debug) {
+      if (!debug?.run_id) return;
+      await Promise.all([...resultsEl.querySelectorAll("[data-debug-text]")].map(async (node) => {
+        const name = node.getAttribute("data-debug-text");
+        try {
+          const res = await fetch(debugUrl(debug.run_id, name));
+          node.textContent = res.ok ? await res.text() : `ошибка ${res.status}`;
+        } catch (err) {
+          node.textContent = err.message;
+        }
+      }));
+    }
+
+    function wireTryOnUi() {
+      document.querySelectorAll("#categoryChips .chip").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          const cat = chip.dataset.cat;
+          if (tryOnCategories.has(cat)) {
+            tryOnCategories.delete(cat);
+            chip.classList.remove("selected");
+          } else {
+            tryOnCategories.add(cat);
+            chip.classList.add("selected");
+          }
+        });
+      });
+      document.querySelectorAll("#tryOnToggle .toggle-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (btn.dataset.mode === "generative" && !healthData.generative_available) return;
+          tryOnMode = btn.dataset.mode;
+          document.querySelectorAll("#tryOnToggle .toggle-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
+      document.getElementById("btnTryOn")?.addEventListener("click", runTryOn);
+      document.getElementById("btnOutfitScan")?.addEventListener("click", runOutfitScan);
+    }
+
+    function updateCompareSlider(val) {
+      const after = document.getElementById("compareAfter");
+      if (after) after.style.clipPath = `inset(0 0 0 ${val}%)`;
+    }
+
+    async function runTryOn() {
+      const resultEl = document.getElementById("tryOnResult");
+      if (!lastFaceFile) {
+        resultEl.innerHTML = `<p class="error">Сначала загрузите и проанализируйте фото лица.</p>`;
+        return;
+      }
+      resultEl.innerHTML = `<p class="empty-note">Примерка…</p>`;
+      setStep(3);
+
+      const categories = [...tryOnCategories];
+      const meta = {
+        season_twelve: lastSeasonTwelve,
+        categories,
+        generative: tryOnMode === "generative",
+      };
+      const fd = new FormData();
+      fd.append("file", lastFaceFile);
+      fd.append("meta_json", JSON.stringify(meta));
+
+      try {
+        const res = await fetch("/try-on/photo", { method: "POST", body: fd });
+        const text = await res.text();
+        let body;
+        try { body = JSON.parse(text); } catch { body = text; }
+
+        if (!res.ok) {
+          const msg = res.status === 404
+            ? "Endpoint <code>/try-on/photo</code> ещё не реализован (P1)."
+            : `Ошибка ${res.status}`;
+          resultEl.innerHTML = `<p class="warn">${msg}</p><pre>${typeof body === "string" ? body : JSON.stringify(body, null, 2)}</pre>`;
+          return;
+        }
+
+        const branch = tryOnMode === "generative" ? body.generative : body.cv;
+        const composite = branch?.composite_b64;
+        if (!composite) {
+          resultEl.innerHTML = `<p class="warn">Нет composite в ответе.</p>`;
+          return;
+        }
+
+        resultEl.innerHTML = `<p class="ok">Try-on готов (${tryOnMode})</p>`;
+        const compareBox = document.getElementById("compareBox");
+        const sliderWrap = document.getElementById("sliderWrap");
+        const afterImg = document.getElementById("compareAfter");
+        compareBox.hidden = false;
+        sliderWrap.hidden = false;
+        afterImg.src = `data:image/jpeg;base64,${composite}`;
+        const slider = document.getElementById("compareSlider");
+        slider.oninput = (e) => updateCompareSlider(e.target.value);
+        updateCompareSlider(slider.value);
+      } catch (err) {
+        resultEl.innerHTML = `<p class="error">${err.message}</p>`;
+      }
+    }
+
+    async function runOutfitScan() {
+      const resultEl = document.getElementById("outfitResult");
+      const outfitInput = document.getElementById("outfitFile");
+      if (lastSeasonTwelve === "unknown") {
+        resultEl.innerHTML = `<p class="error">Сначала определите цветотип (шаг 1).</p>`;
+        return;
+      }
+      if (!outfitInput?.files?.[0]) {
+        resultEl.innerHTML = `<p class="error">Выберите фото образа.</p>`;
+        return;
+      }
+      resultEl.innerHTML = `<p class="empty-note">Сканирование…</p>`;
+      setStep(4);
+
+      const fd = new FormData();
+      fd.append("file", outfitInput.files[0]);
+      fd.append("season_twelve", lastSeasonTwelve);
+
+      try {
+        const res = await fetch("/outfit/scan", { method: "POST", body: fd });
+        const text = await res.text();
+        let body;
+        try { body = JSON.parse(text); } catch { body = text; }
+
+        if (!res.ok) {
+          const msg = res.status === 404
+            ? "Endpoint <code>/outfit/scan</code> ещё не реализован (P2)."
+            : `Ошибка ${res.status}`;
+          resultEl.innerHTML = `<p class="warn">${msg}</p>`;
+          return;
+        }
+
+        const score = Math.round(body.compatibility_score ?? 0);
+        let html = `
+          <div style="display:flex;gap:1rem;align-items:center;margin-top:0.75rem">
+            <div class="score-ring">${score}</div>
+            <div>
+              <div style="font-weight:600">Совместимость с ${TWELVE_RU[lastSeasonTwelve] || lastSeasonTwelve}</div>
+              <div class="section-note">CV + optional LLM narrative</div>
+            </div>
+          </div>`;
+        if (body.issues?.length) {
+          html += `<ul class="rec-list">${body.issues.map(i => `<li><div class="rec-detail">${i}</div></li>`).join("")}</ul>`;
+        }
+        if (body.suggestions?.length) {
+          html += `<h3 style="margin-top:0.75rem">Советы</h3><ul class="rec-list">${body.suggestions.map(s => `<li><div class="rec-detail">${s}</div></li>`).join("")}</ul>`;
+        }
+        resultEl.innerHTML = html;
+      } catch (err) {
+        resultEl.innerHTML = `<p class="error">${err.message}</p>`;
+      }
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      statusEl.textContent = "Отправка… (SegFace: первый анализ может занять 1–2 мин)";
+      statusEl.className = "";
+      resultsEl.hidden = true;
+      submitBtn.disabled = true;
+      setStep(1);
+
+      revokePreviewUrls();
+      const faceInput = document.getElementById("file");
+      const faceUrl = filePreviewUrl(faceInput);
+      const wristUrl = filePreviewUrl(document.getElementById("wrist"));
+      lastFaceFile = faceInput.files[0];
+
+      const fd = new FormData();
+      fd.append("file", lastFaceFile);
+      const wrist = document.getElementById("wrist").files[0];
+      if (wrist) fd.append("wrist_file", wrist);
+      const meta = document.getElementById("meta").value.trim();
+      if (meta) fd.append("meta_json", meta);
+
+      try {
+        const res = await fetch("/analyse", { method: "POST", body: fd });
+        const text = await res.text();
+        let body;
+        try { body = JSON.parse(text); } catch { body = text; }
+
+        if (!res.ok) {
+          statusEl.textContent = `Ошибка ${res.status}`;
+          statusEl.className = "error";
+          resultsEl.innerHTML = renderInputSection(faceUrl, wristUrl)
+            + `<pre>${typeof body === "string" ? body : JSON.stringify(body, null, 2)}</pre>`;
+        } else {
+          lastAnalysis = body;
+          const seasonal = body.metrics?.seasonal || {};
+          const color = body.metrics?.color_features || {};
+          lastSeasonTwelve = seasonal.seasonal_twelve || color.seasonal_twelve || "unknown";
+
+          statusEl.textContent = "Анализ готов · загрузка продуктов…";
+          statusEl.className = "ok";
+          const products = await fetchProductMatches(lastSeasonTwelve);
+          setStep(2);
+
+          resultsEl.innerHTML = renderResults(body, faceUrl, wristUrl, products);
+          wireTryOnUi();
+          await hydrateDebugTexts(body.debug);
+          statusEl.textContent = "Готово";
+        }
+        resultsEl.hidden = false;
+      } catch (err) {
+        statusEl.textContent = "Сеть: " + err.message;
+        statusEl.className = "error";
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    loadHealth();
+  </script>
+</body>
+</html>

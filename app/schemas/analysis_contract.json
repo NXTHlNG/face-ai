@@ -1,10 +1,37 @@
 {
   "$defs": {
+    "AnalysisPalette": {
+      "description": "Colors extracted from the face and season reference swatches used in classification.",
+      "properties": {
+        "face": {
+          "items": {
+            "$ref": "#/$defs/PaletteSwatch"
+          },
+          "title": "Face",
+          "type": "array"
+        },
+        "season_reference": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/PaletteSwatch"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Season Reference"
+        }
+      },
+      "title": "AnalysisPalette",
+      "type": "object"
+    },
     "ColorFeatures": {
-      "description": "Признаки для палитры / грубого цветотипа (ориентиры, не диагноз).",
       "properties": {
         "skin_ab_mean": {
-          "description": "Средние a*, b* по коже (Lab).",
           "maxItems": 2,
           "minItems": 2,
           "prefixItems": [
@@ -19,7 +46,6 @@
           "type": "array"
         },
         "skin_chroma_hint": {
-          "description": "Грубая насыщенность кожи.",
           "title": "Skin Chroma Hint",
           "type": "number"
         },
@@ -80,7 +106,6 @@
           "title": "Iris Ab Mean"
         },
         "eye_color_hint": {
-          "description": "Грубая категория цвета глаз по LAB радужки.",
           "enum": [
             "blue",
             "gray",
@@ -96,19 +121,16 @@
           "type": "string"
         },
         "eye_color_label_ru": {
-          "description": "Подпись цвета глаз на русском.",
           "title": "Eye Color Label Ru",
           "type": "string"
         },
         "eye_color_confidence": {
-          "description": "Уверенность в eye_color_hint.",
           "maximum": 1,
           "minimum": 0,
           "title": "Eye Color Confidence",
           "type": "number"
         },
         "undertone_hint": {
-          "description": "Подтон: кожа + при наличии волосы и радужка в a*b* (освещение искажает).",
           "enum": [
             "warm",
             "cool",
@@ -118,7 +140,6 @@
           "type": "string"
         },
         "depth_hint": {
-          "description": "Глубина (value): светлота кожи и волос в LAB.",
           "enum": [
             "light",
             "deep",
@@ -128,7 +149,6 @@
           "type": "string"
         },
         "seasonal_twelve": {
-          "description": "12 сезонов (англ. ключи): подтип внутри тёплого/холодного × светлота × soft/clear.",
           "enum": [
             "light_spring",
             "true_spring",
@@ -154,7 +174,6 @@
           "type": "number"
         },
         "seasonal_guess": {
-          "description": "Родительский сезон (4), согласован с seasonal_twelve.",
           "enum": [
             "spring",
             "summer",
@@ -166,7 +185,6 @@
           "type": "string"
         },
         "seasonal_confidence": {
-          "description": "Уверенность в подтипе (seasonal_twelve); совпадает с seasonal_twelve_confidence.",
           "maximum": 1,
           "minimum": 0,
           "title": "Seasonal Confidence",
@@ -233,7 +251,6 @@
       "type": "object"
     },
     "ContrastMetrics": {
-      "description": "Контраст между элементами лица (не HDR).",
       "properties": {
         "skin_L_mean": {
           "title": "Skin L Mean",
@@ -280,7 +297,6 @@
           "title": "Lip L Mean"
         },
         "brow_skin_delta_L": {
-          "description": "|L брови − L кожи|.",
           "title": "Brow Skin Delta L",
           "type": "number"
         },
@@ -294,7 +310,6 @@
             }
           ],
           "default": null,
-          "description": "|L волос − L кожи|.",
           "title": "Hair Skin Delta L"
         },
         "iris_skin_delta_L": {
@@ -322,7 +337,6 @@
           "title": "Lip Skin Delta L"
         },
         "value_contrast_index": {
-          "description": "Сводный индекс value-contrast (0–100).",
           "maximum": 100,
           "minimum": 0,
           "title": "Value Contrast Index",
@@ -339,7 +353,6 @@
         },
         "parsing_used": {
           "default": false,
-          "description": "Использовалась ли сегментационная модель.",
           "title": "Parsing Used",
           "type": "boolean"
         }
@@ -354,30 +367,68 @@
       "title": "ContrastMetrics",
       "type": "object"
     },
+    "DebugArtifact": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "text",
+            "json"
+          ],
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "kind"
+      ],
+      "title": "DebugArtifact",
+      "type": "object"
+    },
+    "DebugBundle": {
+      "properties": {
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/DebugArtifact"
+          },
+          "title": "Artifacts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "run_id"
+      ],
+      "title": "DebugBundle",
+      "type": "object"
+    },
     "GeometryMetrics": {
       "properties": {
         "cheekbone_width_norm": {
-          "description": "Ширина скул / межзрачковое (условно норм.).",
           "title": "Cheekbone Width Norm",
           "type": "number"
         },
         "jaw_to_cheek_ratio": {
-          "description": "Отношение ширины челюсти к ширине скул.",
           "title": "Jaw To Cheek Ratio",
           "type": "number"
         },
         "face_aspect_ratio": {
-          "description": "Высота лица / ширина (ограничивающий контур).",
           "title": "Face Aspect Ratio",
           "type": "number"
         },
         "forehead_to_cheek_ratio": {
-          "description": "Ширина лба / ширина скул.",
           "title": "Forehead To Cheek Ratio",
           "type": "number"
         },
         "vertical_thirds_balance": {
-          "description": "Насколько равны вертикальные трети (1 — идеально ровно).",
           "maximum": 1,
           "minimum": 0,
           "title": "Vertical Thirds Balance",
@@ -413,7 +464,6 @@
             }
           ],
           "default": null,
-          "description": "Источник точек: mediapipe_478 или dlib_iBUG_81.",
           "title": "Geometry Landmark Set"
         }
       },
@@ -429,6 +479,36 @@
       "title": "GeometryMetrics",
       "type": "object"
     },
+    "MaskPreview": {
+      "properties": {
+        "skin_mask_b64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skin Mask B64"
+        },
+        "combined_features_b64": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Combined Features B64"
+        }
+      },
+      "title": "MaskPreview",
+      "type": "object"
+    },
     "MetricsBundle": {
       "properties": {
         "geometry": {
@@ -442,6 +522,39 @@
         },
         "parsing": {
           "$ref": "#/$defs/ParsingMeta"
+        },
+        "seasonal": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SeasonalAnalysis"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "analysis_palette": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AnalysisPalette"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "mask_preview": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MaskPreview"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -453,11 +566,137 @@
       "title": "MetricsBundle",
       "type": "object"
     },
+    "MunsellScores": {
+      "properties": {
+        "undertone": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Undertone",
+          "type": "integer"
+        },
+        "chroma": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Chroma",
+          "type": "integer"
+        },
+        "value": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Value",
+          "type": "integer"
+        },
+        "contrast": {
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Contrast",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "undertone",
+        "chroma",
+        "value",
+        "contrast"
+      ],
+      "title": "MunsellScores",
+      "type": "object"
+    },
+    "PaletteSwatch": {
+      "properties": {
+        "region": {
+          "title": "Region",
+          "type": "string"
+        },
+        "rgb": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Rgb",
+          "type": "array"
+        },
+        "hex": {
+          "title": "Hex",
+          "type": "string"
+        },
+        "lab_opencv": {
+          "maxItems": 3,
+          "minItems": 3,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Lab Opencv",
+          "type": "array"
+        },
+        "lab_cielab": {
+          "anyOf": [
+            {
+              "maxItems": 3,
+              "minItems": 3,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lab Cielab"
+        }
+      },
+      "required": [
+        "region",
+        "rgb",
+        "hex",
+        "lab_opencv"
+      ],
+      "title": "PaletteSwatch",
+      "type": "object"
+    },
     "ParsingMeta": {
       "properties": {
         "used_model": {
           "title": "Used Model",
           "type": "boolean"
+        },
+        "parsing_backend": {
+          "default": "landmark_fallback",
+          "enum": [
+            "bisenet_resnet34",
+            "farl_b",
+            "segface",
+            "landmark_fallback"
+          ],
+          "title": "Parsing Backend",
+          "type": "string"
         },
         "glasses_mask_ratio": {
           "anyOf": [
@@ -479,31 +718,26 @@
       "type": "object"
     },
     "PhotoQuality": {
-      "description": "Эвристики качества входного изображения.",
       "properties": {
         "sharpness_score": {
-          "description": "Нормализованная резкость (Laplacian variance).",
           "maximum": 1,
           "minimum": 0,
           "title": "Sharpness Score",
           "type": "number"
         },
         "exposure_score": {
-          "description": "Насколько экспозиция в допустимом диапазоне.",
           "maximum": 1,
           "minimum": 0,
           "title": "Exposure Score",
           "type": "number"
         },
         "face_coverage_ratio": {
-          "description": "Доля площади изображения, занятая bbox лица.",
           "maximum": 1,
           "minimum": 0,
           "title": "Face Coverage Ratio",
           "type": "number"
         },
         "passes_gate": {
-          "description": "Проходит ли фото минимальный порог для анализа.",
           "title": "Passes Gate",
           "type": "boolean"
         },
@@ -547,18 +781,15 @@
           "type": "string"
         },
         "rule_id": {
-          "description": "Стабильный идентификатор правила.",
           "title": "Rule Id",
           "type": "string"
         },
         "rule_version": {
-          "description": "Версия набора правил.",
           "title": "Rule Version",
           "type": "string"
         },
         "based_on": {
           "additionalProperties": true,
-          "description": "Какие поля метрик задействованы (для объяснимости).",
           "title": "Based On",
           "type": "object"
         }
@@ -571,6 +802,195 @@
         "rule_version"
       ],
       "title": "RecommendationItem",
+      "type": "object"
+    },
+    "SeasonScore": {
+      "properties": {
+        "season": {
+          "title": "Season",
+          "type": "string"
+        },
+        "probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Probability",
+          "type": "number"
+        }
+      },
+      "required": [
+        "season",
+        "probability"
+      ],
+      "title": "SeasonScore",
+      "type": "object"
+    },
+    "SeasonalAnalysis": {
+      "properties": {
+        "seasonal_guess": {
+          "enum": [
+            "spring",
+            "summer",
+            "autumn",
+            "winter",
+            "unknown"
+          ],
+          "title": "Seasonal Guess",
+          "type": "string"
+        },
+        "seasonal_twelve": {
+          "enum": [
+            "light_spring",
+            "true_spring",
+            "bright_spring",
+            "light_summer",
+            "true_summer",
+            "soft_summer",
+            "soft_autumn",
+            "true_autumn",
+            "deep_autumn",
+            "deep_winter",
+            "true_winter",
+            "bright_winter",
+            "unknown"
+          ],
+          "title": "Seasonal Twelve",
+          "type": "string"
+        },
+        "seasonal_sixteen": {
+          "title": "Seasonal Sixteen",
+          "type": "string"
+        },
+        "seasonal_confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Seasonal Confidence",
+          "type": "number"
+        },
+        "seasonal_twelve_confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Seasonal Twelve Confidence",
+          "type": "number"
+        },
+        "seasonal_guess_top_k": {
+          "items": {
+            "$ref": "#/$defs/SeasonScore"
+          },
+          "title": "Seasonal Guess Top K",
+          "type": "array"
+        },
+        "seasonal_twelve_top_k": {
+          "items": {
+            "$ref": "#/$defs/SubtypeScore"
+          },
+          "title": "Seasonal Twelve Top K",
+          "type": "array"
+        },
+        "munsell_scores": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MunsellScores"
+            },
+            {
+              "additionalProperties": {
+                "type": "integer"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Munsell Scores"
+        },
+        "skin_tone_class": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skin Tone Class"
+        },
+        "undertone_hint": {
+          "enum": [
+            "warm",
+            "cool",
+            "neutral"
+          ],
+          "title": "Undertone Hint",
+          "type": "string"
+        },
+        "undertone_source": {
+          "default": "face",
+          "enum": [
+            "face",
+            "wrist",
+            "fused",
+            "park_skin_ab"
+          ],
+          "title": "Undertone Source",
+          "type": "string"
+        },
+        "classifier_contributors": {
+          "additionalProperties": true,
+          "title": "Classifier Contributors",
+          "type": "object"
+        },
+        "delta_e_scores": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Delta E Scores"
+        },
+        "seasonal_method": {
+          "default": "ensemble",
+          "title": "Seasonal Method",
+          "type": "string"
+        }
+      },
+      "required": [
+        "seasonal_guess",
+        "seasonal_twelve",
+        "seasonal_sixteen",
+        "seasonal_confidence",
+        "seasonal_twelve_confidence",
+        "undertone_hint"
+      ],
+      "title": "SeasonalAnalysis",
+      "type": "object"
+    },
+    "SubtypeScore": {
+      "properties": {
+        "subtype": {
+          "title": "Subtype",
+          "type": "string"
+        },
+        "probability": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Probability",
+          "type": "number"
+        }
+      },
+      "required": [
+        "subtype",
+        "probability"
+      ],
+      "title": "SubtypeScore",
       "type": "object"
     }
   },
@@ -587,8 +1007,7 @@
           "type": "null"
         }
       ],
-      "default": null,
-      "description": "Типизированные метрики; null если лицо не найдено или сработал gate качества."
+      "default": null
     },
     "confidence": {
       "$ref": "#/$defs/ConfidenceBreakdown"
@@ -599,6 +1018,17 @@
       },
       "title": "Recommendations",
       "type": "array"
+    },
+    "debug": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DebugBundle"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "disclaimer": {
       "default": "Рекомендации носят ориентировочный характер; цвет и контраст зависят от освещения и камеры.",
