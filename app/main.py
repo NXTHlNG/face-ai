@@ -15,9 +15,11 @@ from app.exceptions import DlibNotInstalledError
 from app.pipeline.orchestrator import health_status
 from app.schemas.analysis import AnalysisRequestMeta, AnalysisResponse
 from app.schemas.products import ProductCategory, ProductMatchResponse
+from app.schemas.try_on import TryOnPhotoRequestMeta, TryOnPhotoResult
 from app.services.analysis_service import analyze_image_bytes
 from app.services.product_catalog import ProductCatalogError, catalog_stats
 from app.services.product_matcher import match_products
+from app.services.try_on_service import TryOnError, try_on_photo_bytes
 
 
 def _configure_app_logging() -> None:
@@ -58,6 +60,7 @@ def health() -> dict:
         "rules_version": settings.rules_version,
         "llm_available": settings.llm_available,
         "generative_available": settings.generative_available,
+        "generative_use_mask": settings.generative_use_mask,
         "products_catalog": catalog_stats(),
     }
 
@@ -143,6 +146,22 @@ def products_match(
         )
     except ProductCatalogError as e:
         raise HTTPException(status_code=503, detail=str(e)) from e
+
+
+@app.post("/try-on/photo", response_model=TryOnPhotoResult)
+async def try_on_photo(
+    meta_json: Annotated[str, Form(...)],
+    file: UploadFile = File(...),
+) -> TryOnPhotoResult:
+    try:
+        meta = TryOnPhotoRequestMeta.model_validate_json(meta_json)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"invalid meta_json: {e}") from e
+    data = await file.read()
+    try:
+        return await run_in_threadpool(try_on_photo_bytes, data, meta)
+    except TryOnError as e:
+        raise HTTPException(status_code=e.status_code, detail=str(e)) from e
 
 
 def create_app() -> FastAPI:

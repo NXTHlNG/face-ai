@@ -76,9 +76,22 @@ class Settings(BaseSettings):
     llm_api_url: str = ""
     llm_api_key: str = ""
 
-    # Generative try-on Model API (HTTP); "none" = CV-only
+    # Generative try-on Model API (HTTP); "none" = disabled
     generative_api_url: str = "none"
     generative_api_key: str = ""
+    generative_transport: Literal["openai_images_edit", "custom_json", "gemini_native"] = (
+        "openai_images_edit"
+    )
+    generative_model: str = "dall-e-2"
+    generative_timeout_s: float = 90.0
+    generative_strength: float = 0.75
+    generative_use_mask: bool = True
+    # Blend model output with original using parsing mask (critical for makeup preservation)
+    generative_composite_mask: bool = False
+    # OpenAI images/edits size: auto preserves input aspect ratio (gpt-image-*)
+    generative_image_size: str = "auto"
+    # auto | b64_json | omit — gpt-image-* and many proxies reject response_format
+    generative_response_format: str = "auto"
 
     # Try-on / outfit
     tryon_default_categories: str = "makeup,glasses,hairstyle"
@@ -124,6 +137,14 @@ class Settings(BaseSettings):
     @property
     def llm_available(self) -> bool:
         return self.llm_enabled and bool(self.llm_api_url.strip())
+
+    @property
+    def resolved_generative_api_key(self) -> str:
+        """Generative key, else LLM key (same provider / OpenAI-compatible gateway)."""
+        key = self.generative_api_key.strip()
+        if key:
+            return key
+        return self.llm_api_key.strip()
 
     @property
     def generative_available(self) -> bool:

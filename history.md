@@ -651,3 +651,109 @@ Wizard-style debug UI: /health pills, product match cards, try-on section (Class
 **Logging (2026-05-23):** INFO в консоль uvicorn — raw JSON от LLM, parsed seasonal, CV→LLM merge в orchestrator. Fix: явный `StreamHandler` на `app.backends.llm` / `app.pipeline.orchestrator` (setLevel без handler не выводил в uvicorn).
 
 **Next:** P1 slice 2 — CV Photo try-on (`MakeupRenderer`, `GlassesRenderer`, `HairstyleRenderer`, `TryOnEngine`, `POST /try-on/photo`).
+
+## 2026-06-01 — Generative Photo Try-On (makeup / glasses / hairstyle)
+
+**Done:**
+- `docs/generative-api-contract.md` — OpenAI `/v1/images/edits` + `custom_json` inpaint
+- `app/config.py` — `generative_transport`, `generative_model`, `generative_timeout_s`, `generative_strength`
+- `app/backends/try_on/generative_api.py` — `GenerativeModelAPI` (multipart + JSON), mask RGBA для OpenAI
+- `app/backends/try_on/mask_builder.py`, `prompt_builder.py`, `generative_glasses.txt`
+- `app/backends/try_on/engine.py` — `TryOnEngine`, порядок hairstyle → makeup → glasses
+- `app/pipeline/face_prepare.py` — landmarks + parsing для try-on
+- `app/services/try_on_service.py`, `POST /try-on/photo` в `app/main.py` (threadpool)
+- `scripts/mock_generative_server.py` — mock `/v1/images/edits` и `/inpaint`
+- `tests/test_generative_api.py`, `test_mask_builder.py`, `test_try_on_engine.py`, `test_try_on_endpoint.py`
+- `static/index.html` — default AI mode, Classic скрыт при generative on
+
+**CV branch:** `cv: null` до реализации `MakeupRenderer` / overlay renderers.
+
+**Env:** `FACE_AI_GENERATIVE_API_URL` + `FACE_AI_GENERATIVE_TRANSPORT=openai_images_edit|custom_json`
+
+## 2026-06-01 — Fix: generative 401 (no API key)
+
+**Cause:** `FACE_AI_GENERATIVE_API_KEY` не задан, при этом LLM ключ есть (`vsellm` и т.п.).
+
+**Fix:** `settings.resolved_generative_api_key` — fallback на `FACE_AI_LLM_API_KEY`; явное предупреждение в лог, если оба пусты.
+
+## 2026-06-01 — Try-on: переключатель use_mask
+
+**Done:** `meta_json.use_mask` + `FACE_AI_GENERATIVE_USE_MASK` (default true). Без маски — только `image` + `prompt` в `images/edits`; промпт дополняется зонами. UI: «С маской / Без маски». В ответе `categories.*.masked`.
+
+## 2026-06-01 — Try-on: preservation constraints
+
+**Prompts:** `generative_preservation.txt` — aspect ratio, identity, head pose, background; общий negative.  
+**API:** `size=auto` (`FACE_AI_GENERATIVE_IMAGE_SIZE`); выход ресайзится к размеру входа, если модель вернула другие размеры.
+
+## 2026-06-01 — find-skills: промпты для image edit (Gemini 3 Pro)
+
+**Запрос:** `google/gemini-3-pro-image-preview` перерисовывает всё изображение вместо локального редактирования.
+
+**CLI:** `npx skills find` — после `npm cache clean --force` работает; поиск: `gemini image edit`, `image edit prompt`, `nano banana`.
+
+**Рекомендованные skills (по релевантности):**
+- `google-gemini/gemini-skills@gemini-api-dev` — официальный API, image edit vs generate
+- `resciencelab/opc-skills@nanobanana` — Gemini 3 Pro image editing
+- `jezweb/claude-skills@image-gen` — addition/removal, Gemini native editing
+- `agentspace-so/runcomfy-agent-skills@image-edit` — mask-driven region replacement, identity preservation
+- `agentspace-so/runcomfy-agent-skills@nano-banana-edit` — edit-режим Nano Banana
+
+## 2026-06-01 — skills CLI: ERR_MODULE_NOT_FOUND (simple-git.mjs)
+
+**Симптом:** `npx skills add ...` → `Cannot find module .../dist/_chunks/libs/simple-git.mjs` (битый кэш npx, старая/неполная распаковка).
+
+**Fix:** `npm cache clean --force`, удалить `%LOCALAPPDATA%\npm-cache\_npx\ac0ed6aa23b37c1e` (если осталась), затем `npx --yes skills@latest add google-gemini/gemini-skills@gemini-api-dev -y` (или `npm install -g skills@latest` и `skills add ...`). Установлено в `.agents/skills/gemini-api-dev`.
+
+**Контекст проекта:** уже есть `generative_preservation.txt`, маска OpenAI RGBA, `FACE_AI_GENERATIVE_USE_MASK`; проблема может быть в прокси/OpenAI-совместимости, а не только в тексте промпта.
+
+## 2026-06-01 — Fix: Gemini makeup preservation (local mask composite)
+
+**Запрос:** `google/gemini-3-pro-image-preview` перерисовывает всё фото вместо локального макияжа; человек, поза и кадр не должны меняться.
+
+**Причина:** OpenAI `/images/edits` через прокси (vsellm) + `USE_MASK=false` — модель получает только prompt без локального ограничения зон; Gemini semantic edit всё равно может менять весь кадр.
+
+**Fix:**
+- `composite_masked()` в `generative_api.py` — после ответа модели смешиваем результат с оригиналом по parsing-маске (губы/щёки/веки/брови); вне маски — 100% исходные пиксели.
+- `FACE_AI_GENERATIVE_COMPOSITE_MASK=true` (default); для makeup маска применяется локально даже при `USE_MASK=false`.
+- Промпты Gemini-style: «Using the provided portrait… change ONLY… keep pose/identity unchanged» (`generative_makeup.txt`, `generative_preservation.txt`).
+- Новый transport `gemini_native` — прямой вызов `google-genai` `generateContent` для `gemini-3-pro-image-preview` (semantic edit вместо OpenAI edits).
+- `.env`: `USE_MASK=true`, `COMPOSITE_MASK=true`.
+
+**Файлы:** `generative_api.py`, `renderers/category.py`, `prompt_builder.py`, `config.py`, `generative_makeup.txt`, `generative_preservation.txt`, `docs/generative-api-contract.md`, `requirements.txt` (+`google-genai`).
+
+## 2026-06-01 — Fix: composite artifact on Gemini makeup (polygon face)
+
+**Симптом:** «полигон» на лице, дубли глаз/губ — оригинал по краям, внутри маски чужое перегенерированное лицо.
+
+**Что реально отправлялось:**
+- Parsing-маска макияжа = union зон `lips`, `brows`, `blush` (щёки), `shadow` (веко = eye_region минус зрачок), с feather σ=2.5.
+- В API (vsellm `/images/edits`): PNG RGBA, **прозрачные** пиксели = зона редактирования (OpenAI-формат).
+- Локально: `composite_masked()` вставлял **полный ответ модели** внутрь этой маски; Gemini перерисовал всё лицо → шов и дубли.
+
+**Fix:**
+- `resolve_mask_policy()` — для Gemini image + `openai_images_edit`: **не** слать маску в API и **не** делать local composite.
+- Default `FACE_AI_GENERATIVE_COMPOSITE_MASK=false`.
+- Debug: `debug_output/*/tryon_makeup_mask.png`, `_mask_overlay.jpg`, `_model_raw.jpg`, `_mask_meta.txt`.
+- `.env`: `USE_MASK=false`, `COMPOSITE_MASK=false`.
+
+## 2026-06-01 — Fix: Gemini before/after diptych + ignore input reference
+
+**Симптом:** модель отдаёт side-by-side «до/после», другая одежда/фон, цвета не из `makeup_db`.
+
+**Причина:** Gemini image для beauty часто рисует comparison collage; промпт «try-on» без запрета панелей; прокси не держит пиксельный референс как inpaint.
+
+**Fix:**
+- Промпты: «attached photograph in place», «exactly ONE full-frame», запрет before/after/split-screen.
+- `unwrap_diptych_if_present()` — если ширина ~2× входа, берём правую панель (after).
+- `gemini_native`: `response_modalities=["IMAGE"]`, `ImageConfig(aspect_ratio=…)` по входу.
+- Палитра: «Use only these target colors (subtle)».
+
+## 2026-06-01 — Остановка процессов на порту 8000
+
+Завершены процессы, занимавшие `127.0.0.1:8000`: PID **16144** (LISTENING, сервер) и PID **3264** (клиентские соединения). Порт освобождён.
+
+## 2026-06-01 — Fix: generative HTTP 400 Unknown parameter response_format
+
+**Симптом:** vsellm / `gpt-image-2` → `Unknown parameter: 'response_format'`.
+
+**Fix:** `resolve_openai_response_format()` — `auto` шлёт `b64_json` только для `dall-e-*`, для `gpt-image-*` поле не передаётся; retry без поля при 400; парсинг ответа по `url` если нет `b64_json`. Env: `FACE_AI_GENERATIVE_RESPONSE_FORMAT=auto|b64_json|omit`.

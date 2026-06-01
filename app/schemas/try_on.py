@@ -13,6 +13,7 @@ class TryOnCategoryMeta(BaseModel):
     zones: list[str] = Field(default_factory=list)
     sku: str | None = None
     type: str | None = None
+    masked: bool = True
 
 
 class TryOnBranchResult(BaseModel):
@@ -24,7 +25,7 @@ class TryOnPhotoResult(BaseModel):
     original_b64: str
     cv: TryOnBranchResult | None = None
     generative: TryOnBranchResult | None = None
-    active_mode: TryOnActiveMode = "cv"
+    active_mode: TryOnActiveMode = "generative"
 
 
 class TryOnPhotoRequestMeta(BaseModel):
@@ -34,4 +35,5 @@ class TryOnPhotoRequestMeta(BaseModel):
     )
     product_skus: dict[str, str] | None = None
     generative: bool = True
+    use_mask: bool | None = None
     analyze_run_id: str | None = None

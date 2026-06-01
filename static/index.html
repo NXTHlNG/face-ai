@@ -396,7 +396,8 @@
     let lastFaceFile = null;
     let lastSeasonTwelve = "unknown";
     let healthData = {};
-    let tryOnMode = "cv";
+    let tryOnMode = "generative";
+    let tryOnUseMask = true;
     let tryOnCategories = new Set(["makeup", "glasses", "hairstyle"]);
 
     function revokePreviewUrls() {
@@ -436,6 +437,8 @@
         const res = await fetch("/health", { signal: ctrl.signal });
         clearTimeout(timer);
         healthData = res.ok ? await res.json() : {};
+        tryOnMode = healthData.generative_available ? "generative" : "cv";
+        if (healthData.generative_use_mask === false) tryOnUseMask = false;
         const pills = [];
         pills.push(`<span class="pill on">API ok</span>`);
         pills.push(`<span class="pill ${healthData.llm_available ? "on" : "off"}">LLM ${healthData.llm_available ? "on" : "off"}</span>`);
@@ -554,7 +557,9 @@
     }
 
     function renderTryOnSection(faceUrl) {
-      const genHidden = !healthData.generative_available;
+      const genAvailable = healthData.generative_available;
+      const defaultMode = genAvailable ? "generative" : "cv";
+      const classicHidden = genAvailable;
       return `
         <div class="card" id="tryOnSection">
           <h2>Photo try-on</h2>
@@ -565,8 +570,12 @@
             <span class="chip selected" data-cat="hairstyle">Причёска</span>
           </div>
           <div class="toggle-row" id="tryOnToggle">
-            <div class="toggle-btn active" data-mode="cv">Classic (CV)</div>
-            <div class="toggle-btn ${genHidden ? "" : ""}" data-mode="generative" ${genHidden ? 'style="opacity:0.4;pointer-events:none"' : ""}>AI (Generative)</div>
+            <div class="toggle-btn ${defaultMode === "cv" ? "active" : ""}" data-mode="cv" ${classicHidden ? 'hidden style="display:none"' : ""}>Classic (CV)</div>
+            <div class="toggle-btn ${defaultMode === "generative" ? "active" : ""}" data-mode="generative" ${genAvailable ? "" : 'style="opacity:0.4;pointer-events:none"'}>AI (Generative)</div>
+          </div>
+          <div class="toggle-row" id="maskToggle" ${genAvailable ? "" : 'style="display:none"'}>
+            <div class="toggle-btn ${tryOnUseMask ? "active" : ""}" data-mask="1">С маской (parsing)</div>
+            <div class="toggle-btn ${tryOnUseMask ? "" : "active"}" data-mask="0">Без маски (prompt)</div>
           </div>
           <div class="action-row">
             <button type="button" id="btnTryOn">Примерить на фото</button>
@@ -717,6 +726,13 @@
           btn.classList.add("active");
         });
       });
+      document.querySelectorAll("#maskToggle .toggle-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          tryOnUseMask = btn.dataset.mask === "1";
+          document.querySelectorAll("#maskToggle .toggle-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+        });
+      });
       document.getElementById("btnTryOn")?.addEventListener("click", runTryOn);
       document.getElementById("btnOutfitScan")?.addEventListener("click", runOutfitScan);
     }
@@ -740,6 +756,7 @@
         season_twelve: lastSeasonTwelve,
         categories,
         generative: tryOnMode === "generative",
+        use_mask: tryOnUseMask,
       };
       const fd = new FormData();
       fd.append("file", lastFaceFile);
@@ -759,14 +776,21 @@
           return;
         }
 
-        const branch = tryOnMode === "generative" ? body.generative : body.cv;
-        const composite = branch?.composite_b64;
+        let branch = tryOnMode === "generative" ? body.generative : body.cv;
+        if (!branch?.composite_b64 && body.generative?.composite_b64) {
+          branch = body.generative;
+        }
+        if (!branch?.composite_b64 && body.cv?.composite_b64) {
+          branch = body.cv;
+        }
+        const composite = branch?.composite_b64 || body.original_b64;
         if (!composite) {
           resultEl.innerHTML = `<p class="warn">Нет composite в ответе.</p>`;
           return;
         }
+        const modeLabel = branch === body.generative ? "generative" : branch === body.cv ? "cv" : "original";
 
-        resultEl.innerHTML = `<p class="ok">Try-on готов (${tryOnMode})</p>`;
+        resultEl.innerHTML = `<p class="ok">Try-on готов (${modeLabel})</p>`;
         const compareBox = document.getElementById("compareBox");
         const sliderWrap = document.getElementById("sliderWrap");
         const afterImg = document.getElementById("compareAfter");

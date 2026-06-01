@@ -1,0 +1,3 @@
+Season: {season_twelve} ({season_guess}).
+Virtual eyeglasses try-on: {glasses_sku_name}.
+Realistic optical frames, natural reflections, correct perspective on the existing face.

@@ -1,6 +1,5 @@
-Season: {season_twelve} ({season_guess}).
-Makeup try-on inpaint for lips, blush, eyeshadow, brows.
-Target palette from makeup_db zones for this season.
-Preserve skin texture, lighting, and identity.
-Avoid heavy filter look; natural finish.
-Negative: plastic skin, wrong undertone, blurred eyes, changed face shape.
+Edit the attached photograph in place. It is the only reference — same person, same room, same clothes, same pose, same framing.
+Apply virtual makeup for season {season_twelve} ({season_guess}).
+Change ONLY cosmetic color on lips, cheeks, eyelids, and eyebrows. Use the target hex colors subtly; do not change undertone or skin texture.
+Return exactly ONE full-frame photograph. No before/after, no side-by-side, no split screen, no comparison collage, no labels, no extra panels.
+Keep head pose, expression, hair, clothing, background, and lighting exactly as in the attached photo.

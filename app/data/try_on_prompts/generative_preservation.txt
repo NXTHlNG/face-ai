@@ -1,0 +1,13 @@
+OUTPUT FORMAT (mandatory):
+- Return exactly one edited version of the attached photograph.
+- Never output before/after, side-by-side, split-screen, diptych, comparison grid, or multiple panels.
+- Never add text labels such as "before", "after", or arrows.
+
+STRICT PRESERVATION (mandatory):
+- The attached image is the sole reference — edit it in place, do not generate a new portrait.
+- Keep the exact same image dimensions and aspect ratio as the input photo.
+- Do not crop, zoom, reframe, pad, letterbox, or change camera angle.
+- Keep the same person: identical face, identity, age, gender, expression, and skin texture.
+- Keep the exact head pose, head tilt, rotation, and position in the frame.
+- Keep background, lighting, clothing, hair, and body unchanged unless explicitly requested above.
+- Edit only the requested try-on effect; leave every other pixel as close to the original as possible.
